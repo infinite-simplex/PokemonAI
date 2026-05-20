@@ -1,4 +1,7 @@
 agbcc
+server/node_modules/
+__pycache__
+shaders
 *.exe
 *.dat
 *.exe
