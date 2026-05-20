@@ -112,7 +112,7 @@ static void DestroyExpTaskAndCompleteOnInactiveTextPrinter(u8);
 static void Task_GiveExpWithExpBar(u8);
 static void Task_UpdateLvlInHealthbox(u8);
 static void PrintLinkStandbyMsg(void);
-static u32 CopyPlayerMonData(u8, u8 *);
+static u32 CopyPlayerMonData(u8, u8*);
 static void SetPlayerMonData(u8);
 static void StartSendOutAnim(u8, bool8);
 static void DoSwitchOutAnimation(void);
@@ -120,71 +120,71 @@ static void PlayerDoMoveAnimation(void);
 static void Task_StartSendOutAnim(u8);
 static void EndDrawPartyStatusSummary(void);
 
-static void (*const sPlayerBufferCommands[CONTROLLER_CMDS_COUNT])(void) =
+static void (* const sPlayerBufferCommands[CONTROLLER_CMDS_COUNT])(void) =
 {
-    [CONTROLLER_GETMONDATA]               = PlayerHandleGetMonData,
-    [CONTROLLER_GETRAWMONDATA]            = PlayerHandleGetRawMonData,
-    [CONTROLLER_SETMONDATA]               = PlayerHandleSetMonData,
-    [CONTROLLER_SETRAWMONDATA]            = PlayerHandleSetRawMonData,
-    [CONTROLLER_LOADMONSPRITE]            = PlayerHandleLoadMonSprite,
-    [CONTROLLER_SWITCHINANIM]             = PlayerHandleSwitchInAnim,
-    [CONTROLLER_RETURNMONTOBALL]          = PlayerHandleReturnMonToBall,
-    [CONTROLLER_DRAWTRAINERPIC]           = PlayerHandleDrawTrainerPic,
-    [CONTROLLER_TRAINERSLIDE]             = PlayerHandleTrainerSlide,
-    [CONTROLLER_TRAINERSLIDEBACK]         = PlayerHandleTrainerSlideBack,
-    [CONTROLLER_FAINTANIMATION]           = PlayerHandleFaintAnimation,
-    [CONTROLLER_PALETTEFADE]              = PlayerHandlePaletteFade,
-    [CONTROLLER_SUCCESSBALLTHROWANIM]     = PlayerHandleSuccessBallThrowAnim,
-    [CONTROLLER_BALLTHROWANIM]            = PlayerHandleBallThrowAnim,
-    [CONTROLLER_PAUSE]                    = PlayerHandlePause,
-    [CONTROLLER_MOVEANIMATION]            = PlayerHandleMoveAnimation,
-    [CONTROLLER_PRINTSTRING]              = PlayerHandlePrintString,
-    [CONTROLLER_PRINTSTRINGPLAYERONLY]    = PlayerHandlePrintSelectionString,
-    [CONTROLLER_CHOOSEACTION]             = PlayerHandleChooseAction,
-    [CONTROLLER_YESNOBOX]                 = PlayerHandleYesNoBox,
-    [CONTROLLER_CHOOSEMOVE]               = PlayerHandleChooseMove,
-    [CONTROLLER_OPENBAG]                  = PlayerHandleChooseItem,
-    [CONTROLLER_CHOOSEPOKEMON]            = PlayerHandleChoosePokemon,
-    [CONTROLLER_23]                       = PlayerHandleCmd23,
-    [CONTROLLER_HEALTHBARUPDATE]          = PlayerHandleHealthBarUpdate,
-    [CONTROLLER_EXPUPDATE]                = PlayerHandleExpUpdate,
-    [CONTROLLER_STATUSICONUPDATE]         = PlayerHandleStatusIconUpdate,
-    [CONTROLLER_STATUSANIMATION]          = PlayerHandleStatusAnimation,
-    [CONTROLLER_STATUSXOR]                = PlayerHandleStatusXor,
-    [CONTROLLER_DATATRANSFER]             = PlayerHandleDataTransfer,
-    [CONTROLLER_DMA3TRANSFER]             = PlayerHandleDMA3Transfer,
-    [CONTROLLER_PLAYBGM]                  = PlayerHandlePlayBGM,
-    [CONTROLLER_32]                       = PlayerHandleCmd32,
-    [CONTROLLER_TWORETURNVALUES]          = PlayerHandleTwoReturnValues,
-    [CONTROLLER_CHOSENMONRETURNVALUE]     = PlayerHandleChosenMonReturnValue,
-    [CONTROLLER_ONERETURNVALUE]           = PlayerHandleOneReturnValue,
+    [CONTROLLER_GETMONDATA] = PlayerHandleGetMonData,
+    [CONTROLLER_GETRAWMONDATA] = PlayerHandleGetRawMonData,
+    [CONTROLLER_SETMONDATA] = PlayerHandleSetMonData,
+    [CONTROLLER_SETRAWMONDATA] = PlayerHandleSetRawMonData,
+    [CONTROLLER_LOADMONSPRITE] = PlayerHandleLoadMonSprite,
+    [CONTROLLER_SWITCHINANIM] = PlayerHandleSwitchInAnim,
+    [CONTROLLER_RETURNMONTOBALL] = PlayerHandleReturnMonToBall,
+    [CONTROLLER_DRAWTRAINERPIC] = PlayerHandleDrawTrainerPic,
+    [CONTROLLER_TRAINERSLIDE] = PlayerHandleTrainerSlide,
+    [CONTROLLER_TRAINERSLIDEBACK] = PlayerHandleTrainerSlideBack,
+    [CONTROLLER_FAINTANIMATION] = PlayerHandleFaintAnimation,
+    [CONTROLLER_PALETTEFADE] = PlayerHandlePaletteFade,
+    [CONTROLLER_SUCCESSBALLTHROWANIM] = PlayerHandleSuccessBallThrowAnim,
+    [CONTROLLER_BALLTHROWANIM] = PlayerHandleBallThrowAnim,
+    [CONTROLLER_PAUSE] = PlayerHandlePause,
+    [CONTROLLER_MOVEANIMATION] = PlayerHandleMoveAnimation,
+    [CONTROLLER_PRINTSTRING] = PlayerHandlePrintString,
+    [CONTROLLER_PRINTSTRINGPLAYERONLY] = PlayerHandlePrintSelectionString,
+    [CONTROLLER_CHOOSEACTION] = PlayerHandleChooseAction,
+    [CONTROLLER_YESNOBOX] = PlayerHandleYesNoBox,
+    [CONTROLLER_CHOOSEMOVE] = PlayerHandleChooseMove,
+    [CONTROLLER_OPENBAG] = PlayerHandleChooseItem,
+    [CONTROLLER_CHOOSEPOKEMON] = PlayerHandleChoosePokemon,
+    [CONTROLLER_23] = PlayerHandleCmd23,
+    [CONTROLLER_HEALTHBARUPDATE] = PlayerHandleHealthBarUpdate,
+    [CONTROLLER_EXPUPDATE] = PlayerHandleExpUpdate,
+    [CONTROLLER_STATUSICONUPDATE] = PlayerHandleStatusIconUpdate,
+    [CONTROLLER_STATUSANIMATION] = PlayerHandleStatusAnimation,
+    [CONTROLLER_STATUSXOR] = PlayerHandleStatusXor,
+    [CONTROLLER_DATATRANSFER] = PlayerHandleDataTransfer,
+    [CONTROLLER_DMA3TRANSFER] = PlayerHandleDMA3Transfer,
+    [CONTROLLER_PLAYBGM] = PlayerHandlePlayBGM,
+    [CONTROLLER_32] = PlayerHandleCmd32,
+    [CONTROLLER_TWORETURNVALUES] = PlayerHandleTwoReturnValues,
+    [CONTROLLER_CHOSENMONRETURNVALUE] = PlayerHandleChosenMonReturnValue,
+    [CONTROLLER_ONERETURNVALUE] = PlayerHandleOneReturnValue,
     [CONTROLLER_ONERETURNVALUE_DUPLICATE] = PlayerHandleOneReturnValue_Duplicate,
-    [CONTROLLER_CLEARUNKVAR]              = PlayerHandleClearUnkVar,
-    [CONTROLLER_SETUNKVAR]                = PlayerHandleSetUnkVar,
-    [CONTROLLER_CLEARUNKFLAG]             = PlayerHandleClearUnkFlag,
-    [CONTROLLER_TOGGLEUNKFLAG]            = PlayerHandleToggleUnkFlag,
-    [CONTROLLER_HITANIMATION]             = PlayerHandleHitAnimation,
-    [CONTROLLER_CANTSWITCH]               = PlayerHandleCantSwitch,
-    [CONTROLLER_PLAYSE]                   = PlayerHandlePlaySE,
-    [CONTROLLER_PLAYFANFAREORBGM]         = PlayerHandlePlayFanfareOrBGM,
-    [CONTROLLER_FAINTINGCRY]              = PlayerHandleFaintingCry,
-    [CONTROLLER_INTROSLIDE]               = PlayerHandleIntroSlide,
-    [CONTROLLER_INTROTRAINERBALLTHROW]    = PlayerHandleIntroTrainerBallThrow,
-    [CONTROLLER_DRAWPARTYSTATUSSUMMARY]   = PlayerHandleDrawPartyStatusSummary,
-    [CONTROLLER_HIDEPARTYSTATUSSUMMARY]   = PlayerHandleHidePartyStatusSummary,
-    [CONTROLLER_ENDBOUNCE]                = PlayerHandleEndBounceEffect,
-    [CONTROLLER_SPRITEINVISIBILITY]       = PlayerHandleSpriteInvisibility,
-    [CONTROLLER_BATTLEANIMATION]          = PlayerHandleBattleAnimation,
-    [CONTROLLER_LINKSTANDBYMSG]           = PlayerHandleLinkStandbyMsg,
+    [CONTROLLER_CLEARUNKVAR] = PlayerHandleClearUnkVar,
+    [CONTROLLER_SETUNKVAR] = PlayerHandleSetUnkVar,
+    [CONTROLLER_CLEARUNKFLAG] = PlayerHandleClearUnkFlag,
+    [CONTROLLER_TOGGLEUNKFLAG] = PlayerHandleToggleUnkFlag,
+    [CONTROLLER_HITANIMATION] = PlayerHandleHitAnimation,
+    [CONTROLLER_CANTSWITCH] = PlayerHandleCantSwitch,
+    [CONTROLLER_PLAYSE] = PlayerHandlePlaySE,
+    [CONTROLLER_PLAYFANFAREORBGM] = PlayerHandlePlayFanfareOrBGM,
+    [CONTROLLER_FAINTINGCRY] = PlayerHandleFaintingCry,
+    [CONTROLLER_INTROSLIDE] = PlayerHandleIntroSlide,
+    [CONTROLLER_INTROTRAINERBALLTHROW] = PlayerHandleIntroTrainerBallThrow,
+    [CONTROLLER_DRAWPARTYSTATUSSUMMARY] = PlayerHandleDrawPartyStatusSummary,
+    [CONTROLLER_HIDEPARTYSTATUSSUMMARY] = PlayerHandleHidePartyStatusSummary,
+    [CONTROLLER_ENDBOUNCE] = PlayerHandleEndBounceEffect,
+    [CONTROLLER_SPRITEINVISIBILITY] = PlayerHandleSpriteInvisibility,
+    [CONTROLLER_BATTLEANIMATION] = PlayerHandleBattleAnimation,
+    [CONTROLLER_LINKSTANDBYMSG] = PlayerHandleLinkStandbyMsg,
     [CONTROLLER_RESETACTIONMOVESELECTION] = PlayerHandleResetActionMoveSelection,
-    [CONTROLLER_ENDLINKBATTLE]            = PlayerHandleEndLinkBattle,
-    [CONTROLLER_TERMINATOR_NOP]           = PlayerCmdEnd
+    [CONTROLLER_ENDLINKBATTLE] = PlayerHandleEndLinkBattle,
+    [CONTROLLER_TERMINATOR_NOP] = PlayerCmdEnd
 };
 
-static const u8 sTargetIdentities[MAX_BATTLERS_COUNT] = {B_POSITION_PLAYER_LEFT, B_POSITION_PLAYER_RIGHT, B_POSITION_OPPONENT_RIGHT, B_POSITION_OPPONENT_LEFT};
+static const u8 sTargetIdentities[MAX_BATTLERS_COUNT] = { B_POSITION_PLAYER_LEFT, B_POSITION_PLAYER_RIGHT, B_POSITION_OPPONENT_RIGHT, B_POSITION_OPPONENT_LEFT };
 
 // unknown unused data
-static const u8 sUnused[] = {0x48, 0x48, 0x20, 0x5a, 0x50, 0x50, 0x50, 0x58};
+static const u8 sUnused[] = { 0x48, 0x48, 0x20, 0x5a, 0x50, 0x50, 0x50, 0x58 };
 
 void BattleControllerDummy(void)
 {
@@ -230,13 +230,169 @@ static void CompleteOnBankSpritePosX_0(void)
         PlayerBufferExecCompleted();
 }
 
+static void dumpMemoryOfPokemon(u8* base, struct BattlePokemon* toDump) {
+    s32 i;
+    // 0x00
+    u8* str_nickname = base;          // 10 bytes
+    // 0x0A
+    u8* seen = (u8*)(base + 0xA);
+    // 0x0B
+    u8* level = (u8*)(base + 0xB);
+    // 0x0C
+    u32* status1 = (u32*)(base + 0xC);
+    // 0x10
+    u32* status2 = (u32*)(base + 0x10);
+    // 0x14
+    u16* moves = (u16*)(base + 0x14); // 4 * u16 = 8 bytes
+    // 0x1C
+    u8* seen_move = (u8*)(base + 0x1C); // 4 bytes
+    // 0x20
+    u8* pps = (u8*)(base + 0x20); // 4 bytes
+    // 0x24
+    u8* stat_changes = (u8*)(base + 0x24); // 8 bytes
+    // 0x2C
+    u16* hp = (u16*)(base + 0x2C);
+    // 0x2E
+    u16* maxHP = (u16*)(base + 0x2E);
+
+    for (i = 0; i < POKEMON_NAME_LENGTH; i++) {
+        *(str_nickname + i) = toDump->nickname[i];
+    }
+    for (i = 0; i < MAX_MON_MOVES; i++) {
+        *(moves + i) = toDump->moves[i];
+        *(seen_move + i) = toDump->seen_move[i];
+        *(pps + i) = toDump->pp[i];
+    }
+    for (i = 0; i < NUM_BATTLE_STATS - 1; i++) {
+        *(stat_changes + i + 1) = toDump->statStages[i + 1];
+    }
+    *hp = toDump->hp;
+    *maxHP = toDump->maxHP;
+    *level = toDump->level;
+    *status1 = toDump->status1;
+    *status2 = toDump->status2;
+    *seen = toDump->seen;
+}
+
+u8* dumpPlayerMons(u8* base) {
+    s32 i;
+    s32 j;
+    u8 count = CalculatePlayerPartyCount();
+    struct BattlePokemon playerMons[6];
+    //fill in our data
+    for (i = 0; i < count; i++) {
+        struct BattlePokemon* bp = &playerMons[i];
+        GetMonData(&gPlayerParty[i], MON_DATA_NICKNAME, bp->nickname);
+        if (bp->nickname == 0) {
+            break;
+        }
+
+        bp->hp = GetMonData(&gPlayerParty[i], MON_DATA_HP);
+        bp->maxHP = GetMonData(&gPlayerParty[i], MON_DATA_MAX_HP);
+        bp->level = GetMonData(&gPlayerParty[i], MON_DATA_LEVEL);
+        // DebugPrintf("%S", bp->nickname);
+        // DebugPrintf("%u", bp->hp);
+        // DebugPrintf("%u", bp->maxHP);
+        // DebugPrintf("%u", bp->level);
+        // DebugPrintf("END OF POKEMON");
+        for (j = 0; j < MAX_MON_MOVES; j++) {
+            bp->moves[j] = GetMonData(&gPlayerParty[i], MON_DATA_MOVE1 + j);
+            if (bp->moves[j] == 0) {
+                bp->pp[j] = 0xdf;
+                bp->seen_move[j] = 0xf;
+            }
+            else {
+                bp->pp[j] = GetMonData(&gPlayerParty[i], MON_DATA_PP1 + j);
+                bp->seen_move[j] = 0x1;
+            }
+        }
+        for (j = 0; j < NUM_BATTLE_STATS; j++) {
+            bp->statStages[j] = gBattleMons[i].statStages[j];
+        }
+        bp->seen = 0xaa;
+    }
+
+    for (i = 0; i < count; i++) {
+        dumpMemoryOfPokemon(base, &playerMons[i]);
+        base += 0x30;
+    }
+    return base;
+}
+
+u8* dumpEnemyMons(u8* base) {
+    s32 i;
+    s32 j;
+    u8 count = CalculateEnemyPartyCount();
+    struct BattlePokemon playerMons[6];
+    //fill in our data
+    for (i = 0; i < count; i++) {
+        struct BattlePokemon* bp = &playerMons[i];
+
+        GetMonData(&gEnemyParty[i], MON_DATA_NICKNAME, bp->nickname);
+        if (bp->nickname == 0) {
+            break;
+        }
+
+        bp->hp = GetMonData(&gEnemyParty[i], MON_DATA_HP);
+        bp->maxHP = GetMonData(&gEnemyParty[i], MON_DATA_MAX_HP);
+        bp->level = GetMonData(&gEnemyParty[i], MON_DATA_LEVEL);
+        // DebugPrintf("%S", bp->nickname);
+        // DebugPrintf("%u", bp->hp);
+        // DebugPrintf("%u", bp->maxHP);
+        // DebugPrintf("%u", bp->level);
+        // DebugPrintf("END OF POKEMON");
+        for (j = 0; j < MAX_MON_MOVES; j++) {
+            bp->moves[j] = GetMonData(&gEnemyParty[i], MON_DATA_MOVE1 + j);
+            if (bp->moves[j] == 0) {
+                bp->pp[j] = 0xdf;
+            }
+            else {
+                bp->pp[j] = GetMonData(&gEnemyParty[i], MON_DATA_PP1 + j);
+            }
+        }
+
+        for (j = 0; j < NUM_BATTLE_STATS; j++) {
+            bp->statStages[j] = gBattleMons[i].statStages[j];
+        }
+        bp->seen = 0xBB;
+    }
+
+    for (i = 0; i < count; i++) {
+        dumpMemoryOfPokemon(base, &playerMons[i]);
+        base += 0x30;
+    }
+    return base;
+}
+
 static void HandleInputChooseAction(void)
 {
     u16 itemId = gBattleBufferA[gActiveBattler][2] | (gBattleBufferA[gActiveBattler][3] << 8);
-
+    u8* base;
+    u8* base_2;
+    u8 j;
     DoBounceEffect(gActiveBattler, BOUNCE_HEALTHBOX, 7, 1);
     DoBounceEffect(gActiveBattler, BOUNCE_MON, 7, 1);
+    
+    j = 1;
+    base_2 = (u8*)0x2ffffff;
+    *base_2 = 0xfe;
+    base = (u8*)0x3000100;
+    base = dumpPlayerMons(base);
+    base = dumpEnemyMons(base);
+    *(base) = 0xff;
+    //loop until we receive a response
+    while (0xfe == (*base_2)) {
+        *(base + 1) = j;
+        j++;
+    }
+    base_2 = (u8*)0x3000100;
 
+    //clear the memory we overwrote
+    while (base_2 <= base + 1) {
+        *(base_2) = 0;
+        base_2++;
+    }
+    base_2 = (u8*)0x2ffffff;
     if (JOY_REPEAT(DPAD_ANY) && gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_L_EQUALS_A)
         gPlayerDpadHoldFrames++;
     else
@@ -306,9 +462,9 @@ static void HandleInputChooseAction(void)
     else if (JOY_NEW(B_BUTTON) || gPlayerDpadHoldFrames > 59)
     {
         if ((gBattleTypeFlags & BATTLE_TYPE_DOUBLE)
-         && GetBattlerPosition(gActiveBattler) == B_POSITION_PLAYER_RIGHT
-         && !(gAbsentBattlerFlags & gBitTable[GetBattlerAtPosition(B_POSITION_PLAYER_LEFT)])
-         && !(gBattleTypeFlags & BATTLE_TYPE_MULTI))
+            && GetBattlerPosition(gActiveBattler) == B_POSITION_PLAYER_RIGHT
+            && !(gAbsentBattlerFlags & gBitTable[GetBattlerAtPosition(B_POSITION_PLAYER_LEFT)])
+            && !(gBattleTypeFlags & BATTLE_TYPE_MULTI))
         {
             if (gBattleBufferA[gActiveBattler][1] == B_ACTION_USE_ITEM)
             {
@@ -471,7 +627,7 @@ static void HandleInputChooseTarget(void)
 static void HandleInputChooseMove(void)
 {
     bool32 canSelectTarget = FALSE;
-    struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+    struct ChooseMoveStruct* moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
 
     if (JOY_HELD(DPAD_ANY) && gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_L_EQUALS_A)
         gPlayerDpadHoldFrames++;
@@ -561,7 +717,7 @@ static void HandleInputChooseMove(void)
     else if (JOY_NEW(DPAD_RIGHT))
     {
         if (!(gMoveSelectionCursor[gActiveBattler] & 1)
-         && (gMoveSelectionCursor[gActiveBattler] ^ 1) < gNumberOfMovesToChoose)
+            && (gMoveSelectionCursor[gActiveBattler] ^ 1) < gNumberOfMovesToChoose)
         {
             MoveSelectionDestroyCursorAt(gMoveSelectionCursor[gActiveBattler]);
             gMoveSelectionCursor[gActiveBattler] ^= 1;
@@ -586,7 +742,7 @@ static void HandleInputChooseMove(void)
     else if (JOY_NEW(DPAD_DOWN))
     {
         if (!(gMoveSelectionCursor[gActiveBattler] & 2)
-         && (gMoveSelectionCursor[gActiveBattler] ^ 2) < gNumberOfMovesToChoose)
+            && (gMoveSelectionCursor[gActiveBattler] ^ 2) < gNumberOfMovesToChoose)
         {
             MoveSelectionDestroyCursorAt(gMoveSelectionCursor[gActiveBattler]);
             gMoveSelectionCursor[gActiveBattler] ^= 2;
@@ -676,7 +832,7 @@ static void HandleMoveSwitching(void)
 
         if (gMoveSelectionCursor[gActiveBattler] != gMultiUsePlayerCursor)
         {
-            struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+            struct ChooseMoveStruct* moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
             s32 i;
 
             // swap moves and pp
@@ -950,7 +1106,7 @@ static void Intro_WaitForShinyAnimAndHealthbox(void)
     else
     {
         if (gSprites[gHealthboxSpriteIds[gActiveBattler]].callback == SpriteCallbackDummy
-         && gSprites[gHealthboxSpriteIds[BATTLE_PARTNER(gActiveBattler)]].callback == SpriteCallbackDummy)
+            && gSprites[gHealthboxSpriteIds[BATTLE_PARTNER(gActiveBattler)]].callback == SpriteCallbackDummy)
             healthboxAnimDone = TRUE;
     }
 
@@ -983,17 +1139,17 @@ static void Intro_TryShinyAnimShowHealthbox(void)
 
     // Start shiny animation if applicable for 1st Pokémon
     if (!gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].triedShinyMonAnim
-     && !gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].ballAnimActive)
+        && !gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].ballAnimActive)
         TryShinyAnimation(gActiveBattler, &gPlayerParty[gBattlerPartyIndexes[gActiveBattler]]);
 
     // Start shiny animation if applicable for 2nd Pokémon
     if (!gBattleSpritesDataPtr->healthBoxesData[BATTLE_PARTNER(gActiveBattler)].triedShinyMonAnim
-     && !gBattleSpritesDataPtr->healthBoxesData[BATTLE_PARTNER(gActiveBattler)].ballAnimActive)
+        && !gBattleSpritesDataPtr->healthBoxesData[BATTLE_PARTNER(gActiveBattler)].ballAnimActive)
         TryShinyAnimation(BATTLE_PARTNER(gActiveBattler), &gPlayerParty[gBattlerPartyIndexes[BATTLE_PARTNER(gActiveBattler)]]);
 
     // Show healthbox after ball anim
     if (!gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].ballAnimActive
-     && !gBattleSpritesDataPtr->healthBoxesData[BATTLE_PARTNER(gActiveBattler)].ballAnimActive)
+        && !gBattleSpritesDataPtr->healthBoxesData[BATTLE_PARTNER(gActiveBattler)].ballAnimActive)
     {
         if (!gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].healthboxSlideInStarted)
         {
@@ -1065,8 +1221,8 @@ static void Intro_TryShinyAnimShowHealthbox(void)
 static void SwitchIn_CleanShinyAnimShowSubstitute(void)
 {
     if (gSprites[gHealthboxSpriteIds[gActiveBattler]].callback == SpriteCallbackDummy
-     && gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].finishedShinyMonAnim
-     && gSprites[gBattlerSpriteIds[gActiveBattler]].callback == SpriteCallbackDummy)
+        && gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].finishedShinyMonAnim
+        && gSprites[gBattlerSpriteIds[gActiveBattler]].callback == SpriteCallbackDummy)
     {
         CopyBattleSpriteInvisibility(gActiveBattler);
 
@@ -1104,7 +1260,7 @@ static void SwitchIn_TryShinyAnimShowHealthbox(void)
 
     // Wait for ball anim, then show healthbox
     if (gSprites[gBattleControllerData[gActiveBattler]].callback == SpriteCallbackDummy
-     && !gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].ballAnimActive)
+        && !gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].ballAnimActive)
     {
         DestroySprite(&gSprites[gBattleControllerData[gActiveBattler]]);
         UpdateHealthboxAttribute(gHealthboxSpriteIds[gActiveBattler], &gPlayerParty[gBattlerPartyIndexes[gActiveBattler]], HEALTHBOX_ALL);
@@ -1159,7 +1315,7 @@ static void Task_GiveExpToMon(u8 taskId)
 
     if (IsDoubleBattle() == TRUE || monId != gBattlerPartyIndexes[battler]) // Give exp without moving the expbar.
     {
-        struct Pokemon *mon = &gPlayerParty[monId];
+        struct Pokemon* mon = &gPlayerParty[monId];
         u16 species = GetMonData(mon, MON_DATA_SPECIES);
         u8 level = GetMonData(mon, MON_DATA_LEVEL);
         u32 currExp = GetMonData(mon, MON_DATA_EXP);
@@ -1178,7 +1334,7 @@ static void Task_GiveExpToMon(u8 taskId)
             gActiveBattler = savedActiveBattler;
 
             if (IsDoubleBattle() == TRUE
-             && ((u16)(monId) == gBattlerPartyIndexes[battler] || (u16)(monId) == gBattlerPartyIndexes[BATTLE_PARTNER(battler)]))
+                && ((u16)(monId) == gBattlerPartyIndexes[battler] || (u16)(monId) == gBattlerPartyIndexes[BATTLE_PARTNER(battler)]))
                 gTasks[taskId].func = Task_LaunchLvlUpAnim;
             else
                 gTasks[taskId].func = DestroyExpTaskAndCompleteOnInactiveTextPrinter;
@@ -1202,7 +1358,7 @@ static void Task_PrepareToGiveExpWithExpBar(u8 taskId)
     u8 monIndex = gTasks[taskId].tExpTask_monId;
     s32 gainedExp = gTasks[taskId].tExpTask_gainedExp;
     u8 battler = gTasks[taskId].tExpTask_battler;
-    struct Pokemon *mon = &gPlayerParty[monIndex];
+    struct Pokemon* mon = &gPlayerParty[monIndex];
     u8 level = GetMonData(mon, MON_DATA_LEVEL);
     u16 species = GetMonData(mon, MON_DATA_SPECIES);
     u32 exp = GetMonData(mon, MON_DATA_EXP);
@@ -1456,7 +1612,7 @@ static void PlayerHandleYesNoInput(void)
 static void MoveSelectionDisplayMoveNames(void)
 {
     s32 i;
-    struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+    struct ChooseMoveStruct* moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
     gNumberOfMovesToChoose = 0;
 
     for (i = 0; i < MAX_MON_MOVES; i++)
@@ -1478,14 +1634,14 @@ static void MoveSelectionDisplayPpString(void)
 
 static void MoveSelectionDisplayPpNumber(void)
 {
-    u8 *txtPtr;
-    struct ChooseMoveStruct *moveInfo;
+    u8* txtPtr;
+    struct ChooseMoveStruct* moveInfo;
 
     if (gBattleBufferA[gActiveBattler][2] == TRUE) // check if we didn't want to display pp number
         return;
 
     SetPpNumbersPaletteInMoveSelection();
-    moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+    moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
     txtPtr = ConvertIntToDecimalStringN(gDisplayedStringBattle, moveInfo->currentPp[gMoveSelectionCursor[gActiveBattler]], STR_CONV_MODE_RIGHT_ALIGN, 2);
     *(txtPtr)++ = CHAR_SLASH;
     ConvertIntToDecimalStringN(txtPtr, moveInfo->maxPp[gMoveSelectionCursor[gActiveBattler]], STR_CONV_MODE_RIGHT_ALIGN, 2);
@@ -1495,8 +1651,8 @@ static void MoveSelectionDisplayPpNumber(void)
 
 static void MoveSelectionDisplayMoveType(void)
 {
-    u8 *txtPtr;
-    struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+    u8* txtPtr;
+    struct ChooseMoveStruct* moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
 
     txtPtr = StringCopy(gDisplayedStringBattle, gText_MoveInterfaceType);
     *(txtPtr)++ = EXT_CTRL_CODE_BEGIN;
@@ -1604,12 +1760,12 @@ static void PlayerHandleGetMonData(void)
     PlayerBufferExecCompleted();
 }
 
-static u32 CopyPlayerMonData(u8 monId, u8 *dst)
+static u32 CopyPlayerMonData(u8 monId, u8* dst)
 {
     struct BattlePokemon battleMon;
     struct MovePpInfo moveData;
     u8 nickname[POKEMON_NAME_BUFFER_SIZE];
-    u8 *src;
+    u8* src;
     s16 data16;
     u32 data32;
     s32 size = 0;
@@ -1649,7 +1805,7 @@ static u32 CopyPlayerMonData(u8 monId, u8 *dst)
         GetMonData(&gPlayerParty[monId], MON_DATA_NICKNAME, nickname);
         StringCopy_Nickname(battleMon.nickname, nickname);
         GetMonData(&gPlayerParty[monId], MON_DATA_OT_NAME, battleMon.otName);
-        src = (u8 *)&battleMon;
+        src = (u8*)&battleMon;
         for (size = 0; size < sizeof(battleMon); size++)
             dst[size] = src[size];
         break;
@@ -1672,7 +1828,7 @@ static u32 CopyPlayerMonData(u8 monId, u8 *dst)
             moveData.pp[size] = GetMonData(&gPlayerParty[monId], MON_DATA_PP1 + size);
         }
         moveData.ppBonuses = GetMonData(&gPlayerParty[monId], MON_DATA_PP_BONUSES);
-        src = (u8 *)(&moveData);
+        src = (u8*)(&moveData);
         for (size = 0; size < sizeof(moveData); size++)
             dst[size] = src[size];
         break;
@@ -1913,8 +2069,8 @@ static u32 CopyPlayerMonData(u8 monId, u8 *dst)
 void PlayerHandleGetRawMonData(void)
 {
     struct BattlePokemon battleMon;
-    u8 *src = (u8 *)&gPlayerParty[gBattlerPartyIndexes[gActiveBattler]] + gBattleBufferA[gActiveBattler][1];
-    u8 *dst = (u8 *)&battleMon + gBattleBufferA[gActiveBattler][1];
+    u8* src = (u8*)&gPlayerParty[gBattlerPartyIndexes[gActiveBattler]] + gBattleBufferA[gActiveBattler][1];
+    u8* dst = (u8*)&battleMon + gBattleBufferA[gActiveBattler][1];
     u8 i;
 
     for (i = 0; i < gBattleBufferA[gActiveBattler][2]; i++)
@@ -1948,50 +2104,50 @@ static void PlayerHandleSetMonData(void)
 
 static void SetPlayerMonData(u8 monId)
 {
-    struct BattlePokemon *battlePokemon = (struct BattlePokemon *)&gBattleBufferA[gActiveBattler][3];
-    struct MovePpInfo *moveData = (struct MovePpInfo *)&gBattleBufferA[gActiveBattler][3];
+    struct BattlePokemon* battlePokemon = (struct BattlePokemon*)&gBattleBufferA[gActiveBattler][3];
+    struct MovePpInfo* moveData = (struct MovePpInfo*)&gBattleBufferA[gActiveBattler][3];
     s32 i;
 
     switch (gBattleBufferA[gActiveBattler][1])
     {
     case REQUEST_ALL_BATTLE:
-        {
-            u8 iv;
+    {
+        u8 iv;
 
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPECIES, &battlePokemon->species);
-            SetMonData(&gPlayerParty[monId], MON_DATA_HELD_ITEM, &battlePokemon->item);
-            for (i = 0; i < MAX_MON_MOVES; i++)
-            {
-                SetMonData(&gPlayerParty[monId], MON_DATA_MOVE1 + i, &battlePokemon->moves[i]);
-                SetMonData(&gPlayerParty[monId], MON_DATA_PP1 + i, &battlePokemon->pp[i]);
-            }
-            SetMonData(&gPlayerParty[monId], MON_DATA_PP_BONUSES, &battlePokemon->ppBonuses);
-            SetMonData(&gPlayerParty[monId], MON_DATA_FRIENDSHIP, &battlePokemon->friendship);
-            SetMonData(&gPlayerParty[monId], MON_DATA_EXP, &battlePokemon->experience);
-            iv = battlePokemon->hpIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_HP_IV, &iv);
-            iv = battlePokemon->attackIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_ATK_IV, &iv);
-            iv = battlePokemon->defenseIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_DEF_IV, &iv);
-            iv = battlePokemon->speedIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPEED_IV, &iv);
-            iv = battlePokemon->spAttackIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPATK_IV, &iv);
-            iv = battlePokemon->spDefenseIV;
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPDEF_IV, &iv);
-            SetMonData(&gPlayerParty[monId], MON_DATA_PERSONALITY, &battlePokemon->personality);
-            SetMonData(&gPlayerParty[monId], MON_DATA_STATUS, &battlePokemon->status1);
-            SetMonData(&gPlayerParty[monId], MON_DATA_LEVEL, &battlePokemon->level);
-            SetMonData(&gPlayerParty[monId], MON_DATA_HP, &battlePokemon->hp);
-            SetMonData(&gPlayerParty[monId], MON_DATA_MAX_HP, &battlePokemon->maxHP);
-            SetMonData(&gPlayerParty[monId], MON_DATA_ATK, &battlePokemon->attack);
-            SetMonData(&gPlayerParty[monId], MON_DATA_DEF, &battlePokemon->defense);
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPEED, &battlePokemon->speed);
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPATK, &battlePokemon->spAttack);
-            SetMonData(&gPlayerParty[monId], MON_DATA_SPDEF, &battlePokemon->spDefense);
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPECIES, &battlePokemon->species);
+        SetMonData(&gPlayerParty[monId], MON_DATA_HELD_ITEM, &battlePokemon->item);
+        for (i = 0; i < MAX_MON_MOVES; i++)
+        {
+            SetMonData(&gPlayerParty[monId], MON_DATA_MOVE1 + i, &battlePokemon->moves[i]);
+            SetMonData(&gPlayerParty[monId], MON_DATA_PP1 + i, &battlePokemon->pp[i]);
         }
-        break;
+        SetMonData(&gPlayerParty[monId], MON_DATA_PP_BONUSES, &battlePokemon->ppBonuses);
+        SetMonData(&gPlayerParty[monId], MON_DATA_FRIENDSHIP, &battlePokemon->friendship);
+        SetMonData(&gPlayerParty[monId], MON_DATA_EXP, &battlePokemon->experience);
+        iv = battlePokemon->hpIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_HP_IV, &iv);
+        iv = battlePokemon->attackIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_ATK_IV, &iv);
+        iv = battlePokemon->defenseIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_DEF_IV, &iv);
+        iv = battlePokemon->speedIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPEED_IV, &iv);
+        iv = battlePokemon->spAttackIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPATK_IV, &iv);
+        iv = battlePokemon->spDefenseIV;
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPDEF_IV, &iv);
+        SetMonData(&gPlayerParty[monId], MON_DATA_PERSONALITY, &battlePokemon->personality);
+        SetMonData(&gPlayerParty[monId], MON_DATA_STATUS, &battlePokemon->status1);
+        SetMonData(&gPlayerParty[monId], MON_DATA_LEVEL, &battlePokemon->level);
+        SetMonData(&gPlayerParty[monId], MON_DATA_HP, &battlePokemon->hp);
+        SetMonData(&gPlayerParty[monId], MON_DATA_MAX_HP, &battlePokemon->maxHP);
+        SetMonData(&gPlayerParty[monId], MON_DATA_ATK, &battlePokemon->attack);
+        SetMonData(&gPlayerParty[monId], MON_DATA_DEF, &battlePokemon->defense);
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPEED, &battlePokemon->speed);
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPATK, &battlePokemon->spAttack);
+        SetMonData(&gPlayerParty[monId], MON_DATA_SPDEF, &battlePokemon->spDefense);
+    }
+    break;
     case REQUEST_SPECIES_BATTLE:
         SetMonData(&gPlayerParty[monId], MON_DATA_SPECIES, &gBattleBufferA[gActiveBattler][3]);
         break;
@@ -2166,7 +2322,7 @@ static void SetPlayerMonData(u8 monId)
 
 static void PlayerHandleSetRawMonData(void)
 {
-    u8 *dst = (u8 *)&gPlayerParty[gBattlerPartyIndexes[gActiveBattler]] + gBattleBufferA[gActiveBattler][1];
+    u8* dst = (u8*)&gPlayerParty[gBattlerPartyIndexes[gActiveBattler]] + gBattleBufferA[gActiveBattler][1];
     u8 i;
 
     for (i = 0; i < gBattleBufferA[gActiveBattler][2]; i++)
@@ -2204,10 +2360,10 @@ static void StartSendOutAnim(u8 battler, bool8 dontClearSubstituteBit)
     SetMultiuseSpriteTemplateToPokemon(species, GetBattlerPosition(battler));
 
     gBattlerSpriteIds[battler] = CreateSprite(
-      &gMultiuseSpriteTemplate,
-      GetBattlerSpriteCoord(battler, BATTLER_COORD_X_2),
-      GetBattlerSpriteDefault_Y(battler),
-      GetBattlerSpriteSubpriority(battler));
+        &gMultiuseSpriteTemplate,
+        GetBattlerSpriteCoord(battler, BATTLER_COORD_X_2),
+        GetBattlerSpriteDefault_Y(battler),
+        GetBattlerSpriteSubpriority(battler));
 
     gSprites[gBattleControllerData[battler]].data[1] = gBattlerSpriteIds[battler];
     gSprites[gBattleControllerData[battler]].data[2] = battler;
@@ -2280,7 +2436,7 @@ static void PlayerHandleDrawTrainerPic(void)
             trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RED;
         }
         else if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_RUBY
-                 || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
+            || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
         {
             trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
         }
@@ -2362,7 +2518,7 @@ static void PlayerHandleTrainerSlide(void)
             trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RED;
         }
         else if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_RUBY
-                 || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
+            || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
         {
             trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
         }
@@ -2476,7 +2632,7 @@ static void PlayerHandleMoveAnimation(void)
         gAnimMoveDmg = gBattleBufferA[gActiveBattler][6] | (gBattleBufferA[gActiveBattler][7] << 8) | (gBattleBufferA[gActiveBattler][8] << 16) | (gBattleBufferA[gActiveBattler][9] << 24);
         gAnimFriendship = gBattleBufferA[gActiveBattler][10];
         gWeatherMoveAnim = gBattleBufferA[gActiveBattler][12] | (gBattleBufferA[gActiveBattler][13] << 8);
-        gAnimDisableStructPtr = (struct DisableStruct *)&gBattleBufferA[gActiveBattler][16];
+        gAnimDisableStructPtr = (struct DisableStruct*)&gBattleBufferA[gActiveBattler][16];
         gTransformedPersonalities[gActiveBattler] = gAnimDisableStructPtr->transformedMonPersonality;
         if (IsMoveWithoutAnimation(move, gAnimMoveTurn)) // Always returns FALSE.
         {
@@ -2542,11 +2698,11 @@ static void PlayerDoMoveAnimation(void)
 
 static void PlayerHandlePrintString(void)
 {
-    u16 *stringId;
+    u16* stringId;
 
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
-    stringId = (u16 *)(&gBattleBufferA[gActiveBattler][2]);
+    stringId = (u16*)(&gBattleBufferA[gActiveBattler][2]);
     BufferStringBattle(*stringId);
     BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MSG);
     gBattlerControllerFuncs[gActiveBattler] = CompleteOnInactiveTextPrinter2;
@@ -2770,7 +2926,7 @@ static void PlayerHandleStatusAnimation(void)
     if (!IsBattleSEPlaying(gActiveBattler))
     {
         InitAndLaunchChosenStatusAnimation(gBattleBufferA[gActiveBattler][1],
-                        gBattleBufferA[gActiveBattler][2] | (gBattleBufferA[gActiveBattler][3] << 8) | (gBattleBufferA[gActiveBattler][4] << 16) | (gBattleBufferA[gActiveBattler][5] << 24));
+            gBattleBufferA[gActiveBattler][2] | (gBattleBufferA[gActiveBattler][3] << 8) | (gBattleBufferA[gActiveBattler][4] << 16) | (gBattleBufferA[gActiveBattler][5] << 24));
         gBattlerControllerFuncs[gActiveBattler] = CompleteOnFinishedStatusAnimation;
     }
 }
@@ -2791,13 +2947,13 @@ static void PlayerHandleDataTransfer(void)
 static void PlayerHandleDMA3Transfer(void)
 {
     u32 dstArg = gBattleBufferA[gActiveBattler][1]
-            | (gBattleBufferA[gActiveBattler][2] << 8)
-            | (gBattleBufferA[gActiveBattler][3] << 16)
-            | (gBattleBufferA[gActiveBattler][4] << 24);
+        | (gBattleBufferA[gActiveBattler][2] << 8)
+        | (gBattleBufferA[gActiveBattler][3] << 16)
+        | (gBattleBufferA[gActiveBattler][4] << 24);
     u16 sizeArg = gBattleBufferA[gActiveBattler][5] | (gBattleBufferA[gActiveBattler][6] << 8);
 
-    const u8 *src = &gBattleBufferA[gActiveBattler][7];
-    u8 *dst = (u8 *)(dstArg);
+    const u8* src = &gBattleBufferA[gActiveBattler][7];
+    u8* dst = (u8*)(dstArg);
     u32 size = sizeArg;
 
     while (1)
@@ -2973,7 +3129,7 @@ static void PlayerHandleIntroTrainerBallThrow(void)
     gBattlerControllerFuncs[gActiveBattler] = BattleControllerDummy;
 }
 
-void SpriteCB_FreePlayerSpriteLoadMonSprite(struct Sprite *sprite)
+void SpriteCB_FreePlayerSpriteLoadMonSprite(struct Sprite* sprite)
 {
     u8 battler = sprite->sBattlerId;
 
@@ -3034,7 +3190,7 @@ static void PlayerHandleDrawPartyStatusSummary(void)
     else
     {
         gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].partyStatusSummaryShown = 1;
-        gBattlerStatusSummaryTaskId[gActiveBattler] = CreatePartyStatusSummarySprites(gActiveBattler, (struct HpAndStatus *)&gBattleBufferA[gActiveBattler][4], gBattleBufferA[gActiveBattler][1], gBattleBufferA[gActiveBattler][2]);
+        gBattlerStatusSummaryTaskId[gActiveBattler] = CreatePartyStatusSummarySprites(gActiveBattler, (struct HpAndStatus*)&gBattleBufferA[gActiveBattler][4], gBattleBufferA[gActiveBattler][1], gBattleBufferA[gActiveBattler][2]);
         gBattleSpritesDataPtr->healthBoxesData[gActiveBattler].partyStatusDelayTimer = 0;
 
         // If intro, skip the delay after drawing

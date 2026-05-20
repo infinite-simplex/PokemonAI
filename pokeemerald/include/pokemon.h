@@ -292,6 +292,8 @@ struct BattlePokemon
     /*0x4C*/ u32 status1;
     /*0x50*/ u32 status2;
     /*0x54*/ u32 otId;
+    /*0x55*/ u8 seen;
+    /*0x0C*/ u8 seen_move[MAX_MON_MOVES];
 };
 
 struct SpeciesInfo
