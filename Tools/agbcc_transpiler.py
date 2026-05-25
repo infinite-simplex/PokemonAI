@@ -19,32 +19,34 @@ TYPE_SPEC = (
     r"(?:void|char|short|int|long|float|double|"
     r"signed|unsigned|struct|union|enum|"
     r"const|volatile|static|extern|register|"
-    r"typedef|bool)"
+    r"typedef|bool|u8|s32|s8|u32|u16|u64|s16|s64|"
+    r"struct\s+[A-Za-z_]\w*)"  # struct gets its own entry with full name
+
 )
 
-# Matches a full declaration statement, possibly with an initialiser.
-# Group 1 = full declaration text (type + name + optional pointer stars/brackets).
 DECL_RE = re.compile(
-    r"^(\s*)"                            # leading whitespace (group 1)
-    r"("                                 # group 2: the full declarator
-    r"(?:" + TYPE_SPEC + r"\s+)+"        #   one or more type keywords
-    r"\**\s*[A-Za-z_]\w*"               #   optional pointer stars + identifier
-    r"(?:\s*\[[^\]]*\])?"               #   optional array brackets
+    r"^(\s*)"                               # Group 1: Indentation
+    r"("                                    # Group 2: Full declaration type + name
+        r"(?:" + TYPE_SPEC + r"[\s*]+)+"       # Type specifiers
+        r"(?:\*\s*)*"                       # Optional pointer stars
+        r"[A-Za-z_]\w*"                     # Variable name
+        r"(?:\s*\[[^\]]*\])?"               # Optional array
     r")"
-    r"(\s*=\s*.+?)?"                     # group 3: optional initialiser (lazy)
-    r"\s*;\s*$",                         # semicolon
-    re.MULTILINE,
+    r"(?:\s*=\s*([^;]+))?"                  # Group 3: Optional initializer (everything up to ';')
+    r"\s*;"                                 # Statement terminator
+    r"(?:\s*(//.*))?$"                      # Group 4: Optional trailing comment
 )
 
 # Matches the init clause inside   for ( <type> <name> = ... ;
 FOR_DECL_RE = re.compile(
-    r"^(\s*for\s*\(\s*)"                 # group 1: "for ("
-    r"("                                 # group 2: the declarator
-    r"(?:" + TYPE_SPEC + r"\s+)+"
-    r"[A-Za-z_*]\w*"
+    r"^(\s*for\s*\(\s*)"
+    r"("
+        r"(?:" + TYPE_SPEC + r"\s+)+"
+        r"(?:\*\s*)*"
+        r"[A-Za-z_]\w*"
     r")"
-    r"(\s*=\s*[^;]+)?"                   # group 3: optional "= expr"
-    r"(;)",                              # group 4: the semicolon
+    r"(\s*=\s*[^;]+)?"
+    r"(;)"
 )
 
 CONTROL_KEYWORDS = {"if", "else", "for", "while", "do", "switch",
@@ -69,10 +71,11 @@ def is_declaration(line: str) -> bool:
 
 
 def var_name_from_decl(decl_text: str) -> str:
-    """Extract the bare variable name from a declarator string."""
-    # Remove pointer stars, array brackets, then take the last word.
-    cleaned = re.sub(r"[\*\[\]0-9]", " ", decl_text)
-    return cleaned.split()[-1]
+    """Extract variable name from a declarator."""
+    m = re.search(r"([A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*$", decl_text)
+    if not m:
+        return decl_text.strip()
+    return m.group(1)
 
 
 # ---------------------------------------------------------------------------
@@ -137,21 +140,24 @@ def process_block_lines(lines: list[str]) -> list[str]:
 
         # ── Plain declaration ────────────────────────────────────────────
         if is_declaration(line):
-            stripped = line.strip()
-            indent   = re.match(r"^\s*", line).group(0)
-
+            indent = re.match(r"^\s*", line).group(0)
             mm = DECL_RE.match(line)
-            if mm:
-                decl_text = mm.group(2).strip()   # e.g. "int x"
-                init_part = mm.group(3)            # e.g. " = 3"  or None
 
+            if mm:
+                decl_text = mm.group(2).strip()  # e.g. "u16* hp"
+                init_part = mm.group(3)  # e.g. "(u16*)(base + 0x2C)"
+                comment = mm.group(4)  # e.g. "// comments"
+
+                # Hoist the raw declaration type and variable name
                 hoisted_decls.append(f"{indent}{decl_text};")
 
                 if init_part:
                     var = var_name_from_decl(decl_text)
-                    rhs = init_part.strip().lstrip("=").strip()
-                    body_lines.append(f"{indent}{var} = {rhs};")
-                # else: pure declaration – no body line needed
+                    rhs = init_part.strip()
+                    trail = f" {comment.strip()}" if comment else ""
+                    body_lines.append(f"{indent}{var} = {rhs};{trail}")
+                elif comment:
+                    body_lines.append(f"{indent}{comment.strip()}")
             else:
                 # Fallback: keep as-is
                 body_lines.append(line)
@@ -216,9 +222,12 @@ def _rewrite_lines(lines: list[str]) -> list[str]:
             inner    = [l.rstrip("\n") for l in block_lines[1:-1]]
             processed = process_block_lines(inner)
 
-            output.append(block_lines[0])
-            output.extend(processed)
-            output.append(block_lines[-1])
+            if len(block_lines) == 1:
+                output.append(block_lines[0])
+            else:
+                output.append(block_lines[0])
+                output.extend(processed)
+                output.append(block_lines[-1])
             i += consumed
         else:
             output.append(line)
