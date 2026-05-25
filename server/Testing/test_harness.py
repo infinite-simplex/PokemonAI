@@ -32,7 +32,6 @@ TEST_DIR = Path(__file__).resolve().parent
 # -------------------------------------------------------------------------
 
 async def run_test():
-
     with open(TEST_DIR / "test1.json", "r") as f:
         data = json.load(f)
 

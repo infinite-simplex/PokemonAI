@@ -317,12 +317,12 @@ GBA_CHAR_MAP.update({i: chr(i - 0xD5 + ord('a')) for i in range(0xD5, 0xEE)})  #
 GBA_CHAR_MAP[0x00] = ""  # End of String
 GBA_CHAR_MAP[0xFF] = " "
 MOVE_ID_TO_PS = parse_c_defines(
-    ROOT_DIR / "pokeemerald/include/constants/moves.h",
+    ROOT_DIR / "../pokeemerald/include/constants/moves.h",
     "MOVE_"
 )
 
 SPECIES_ID_TO_PS = parse_c_defines(
-    ROOT_DIR / "pokeemerald/include/constants/species.h",
+    ROOT_DIR / "../pokeemerald/include/constants/species.h",
     "SPECIES_"
 )
 
