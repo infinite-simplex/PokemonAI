@@ -231,152 +231,227 @@ static void CompleteOnBankSpritePosX_0(void)
         PlayerBufferExecCompleted();
 }
 
-static void dumpMemoryOfPokemon(u8* base, struct BattlePokemon* toDump) {
+static void dumpMemoryOfPokemon(
+    u8* base,
+    struct SimulatorBattlePokemon* toDump)
+{
     s32 i;
-    u8* seen;
-    u8* level;
-    u32* status1;
-    u32* status2;
-    u8* str_nickname;
-    u16* moves;
-    u8* seen_move;
-    u8* pps;
-    u8* stat_changes;
-    u16* hp;
-    u16* maxHP;
-    // 0x00
-    str_nickname = base; // 10 bytes
-    // 0x0A
-    seen = (u8*)(base + 0xA);
-    // 0x0B
-    level = (u8*)(base + 0xB);
-    // 0x0C
-    status1 = (u32*)(base + 0xC);
-    // 0x10
-    status2 = (u32*)(base + 0x10);
-    // 0x14
-    moves = (u16*)(base + 0x14); // 4 * u16 = 8 bytes
-    // 0x1C
-    seen_move = (u8*)(base + 0x1C); // 4 bytes
-    // 0x20
-    pps = (u8*)(base + 0x20); // 4 bytes
-    // 0x24
-    stat_changes = (u8*)(base + 0x24); // 8 bytes
-    // 0x2C
-    hp = (u16*)(base + 0x2C);
-    // 0x2E
-    maxHP = (u16*)(base + 0x2E);
+    u8* src;
 
-    for (i = 0; i < POKEMON_NAME_LENGTH; i++) {
-        *(str_nickname + i) = toDump->nickname[i];
-    }
-    for (i = 0; i < MAX_MON_MOVES; i++) {
-        *(moves + i) = toDump->moves[i];
-        *(seen_move + i) = toDump->seen_move[i];
-        *(pps + i) = toDump->pp[i];
-    }
-    for (i = 0; i < NUM_BATTLE_STATS - 1; i++) {
-        *(stat_changes + i + 1) = toDump->statStages[i + 1];
-    }
-    *hp = toDump->hp;
-    *maxHP = toDump->maxHP;
-    *level = toDump->level;
-    *status1 = toDump->status1;
-    *status2 = toDump->status2;
-    *seen = toDump->seen;
+    src = (u8*)toDump;
+
+    for (i = 0; i < sizeof(struct SimulatorBattlePokemon); i++)
+        *(base+i) = *(src+i);
 }
 
-u8* dumpPlayerMons(u8* base) {
+u8* dumpPlayerMons(u8* base)
+{
     s32 i;
     s32 j;
     u8 count;
-    struct BattlePokemon playerMons[6];
+
+    struct SimulatorBattlePokemon playerMons[6];
+
     count = CalculatePlayerPartyCount();
-    //fill in our data
-    for (i = 0; i < count; i++) {
-        struct BattlePokemon* bp;
+
+    for (i = 0; i < count; i++)
+    {
+        struct SimulatorBattlePokemon* bp;
+        struct Pokemon* mon;
+
+        mon = &gPlayerParty[i];
         bp = &playerMons[i];
-        GetMonData(&gPlayerParty[i], MON_DATA_NICKNAME, bp->nickname);
-        if (bp->nickname == 0) {
+
+        bp->species = GetMonData(mon, MON_DATA_SPECIES);
+
+        if (bp->species == SPECIES_NONE)
             break;
+
+        bp->attack = GetMonData(mon, MON_DATA_ATK);
+        bp->defense = GetMonData(mon, MON_DATA_DEF);
+        bp->speed = GetMonData(mon, MON_DATA_SPEED);
+        bp->spAttack = GetMonData(mon, MON_DATA_SPATK);
+        bp->spDefense = GetMonData(mon, MON_DATA_SPDEF);
+
+        bp->hp = GetMonData(mon, MON_DATA_HP);
+        bp->maxHP = GetMonData(mon, MON_DATA_MAX_HP);
+
+        bp->level = GetMonData(mon, MON_DATA_LEVEL);
+
+        bp->friendship = GetMonData(mon, MON_DATA_FRIENDSHIP);
+
+        bp->item = GetMonData(mon, MON_DATA_HELD_ITEM);
+
+        bp->personality = GetMonData(mon, MON_DATA_PERSONALITY);
+
+        bp->status1 = GetMonData(mon, MON_DATA_STATUS);
+
+        bp->status2 = 0;
+
+        bp->abilityNum = GetMonAbility(mon);
+
+        bp->isEgg = GetMonData(mon, MON_DATA_IS_EGG);
+
+        bp->gender = GetGenderFromSpeciesAndPersonality(
+                bp->species,
+                bp->personality);
+
+        bp->nature = GetNatureFromPersonality(bp->personality);
+
+        bp->ppBonuses = GetMonData(mon, MON_DATA_PP_BONUSES);
+
+        bp->hpEV = GetMonData(mon, MON_DATA_HP_EV);
+        bp->atkEV = GetMonData(mon, MON_DATA_ATK_EV);
+        bp->defEV = GetMonData(mon, MON_DATA_DEF_EV);
+        bp->speedEV = GetMonData(mon, MON_DATA_SPEED_EV);
+        bp->spAtkEV = GetMonData(mon, MON_DATA_SPATK_EV);
+        bp->spDefEV = GetMonData(mon, MON_DATA_SPDEF_EV);
+
+        bp->hpIV = GetMonData(mon, MON_DATA_HP_IV);
+        bp->atkIV = GetMonData(mon, MON_DATA_ATK_IV);
+        bp->defIV = GetMonData(mon, MON_DATA_DEF_IV);
+        bp->speedIV = GetMonData(mon, MON_DATA_SPEED_IV);
+        bp->spAtkIV = GetMonData(mon, MON_DATA_SPATK_IV);
+        bp->spDefIV = GetMonData(mon, MON_DATA_SPDEF_IV);
+
+        for (j = 0; j < MAX_MON_MOVES; j++)
+        {
+            bp->moves[j] =
+                GetMonData(mon, MON_DATA_MOVE1 + j);
+
+            if (bp->moves[j] == MOVE_NONE)
+            {
+                bp->pp[j] = 0;
+                bp->seen_move[j] = 0;
+            }
+            else
+            {
+                bp->pp[j] = GetMonData(mon, MON_DATA_PP1 + j);
+
+                bp->seen_move[j] = 1;
+            }
         }
 
-        bp->hp = GetMonData(&gPlayerParty[i], MON_DATA_HP);
-        bp->maxHP = GetMonData(&gPlayerParty[i], MON_DATA_MAX_HP);
-        bp->level = GetMonData(&gPlayerParty[i], MON_DATA_LEVEL);
-        // DebugPrintf("%S", bp->nickname);
-        // DebugPrintf("%u", bp->hp);
-        // DebugPrintf("%u", bp->maxHP);
-        // DebugPrintf("%u", bp->level);
-        // DebugPrintf("END OF POKEMON");
-        for (j = 0; j < MAX_MON_MOVES; j++) {
-            bp->moves[j] = GetMonData(&gPlayerParty[i], MON_DATA_MOVE1 + j);
-            if (bp->moves[j] == 0) {
-                bp->pp[j] = 0xdf;
-                bp->seen_move[j] = 0xf;
-            }
-            else {
-                bp->pp[j] = GetMonData(&gPlayerParty[i], MON_DATA_PP1 + j);
-                bp->seen_move[j] = 0x1;
-            }
-        }
-        for (j = 0; j < NUM_BATTLE_STATS; j++) {
-            bp->statStages[j] = gBattleMons[i].statStages[j];
-        }
-        bp->seen = 0xaa;
+        for (j = 0; j < NUM_BATTLE_STATS; j++)
+            bp->statStages[j] =
+            gBattleMons[i].statStages[j];
+
+        bp->seen = 0xAA;
     }
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
         dumpMemoryOfPokemon(base, &playerMons[i]);
-        base += 0x30;
+        base += sizeof(struct SimulatorBattlePokemon);
     }
+
     return base;
 }
 
-u8* dumpEnemyMons(u8* base) {
+u8* dumpEnemyMons(u8* base)
+{
     s32 i;
     s32 j;
     u8 count;
-    struct BattlePokemon playerMons[6];
+
+    struct SimulatorBattlePokemon enemyMons[6];
+
     count = CalculateEnemyPartyCount();
-    //fill in our data
-    for (i = 0; i < count; i++) {
-        struct BattlePokemon* bp;
-        bp = &playerMons[i];
 
-        GetMonData(&gEnemyParty[i], MON_DATA_NICKNAME, bp->nickname);
-        if (bp->nickname == 0) {
+    for (i = 0; i < count; i++)
+    {
+        struct SimulatorBattlePokemon* bp;
+        struct Pokemon* mon;
+
+        mon = &gEnemyParty[i];
+        bp = &enemyMons[i];
+
+        bp->species = GetMonData(mon, MON_DATA_SPECIES);
+
+        if (bp->species == SPECIES_NONE)
             break;
+
+        bp->attack = GetMonData(mon, MON_DATA_ATK);
+        bp->defense = GetMonData(mon, MON_DATA_DEF);
+        bp->speed = GetMonData(mon, MON_DATA_SPEED);
+        bp->spAttack = GetMonData(mon, MON_DATA_SPATK);
+        bp->spDefense = GetMonData(mon, MON_DATA_SPDEF);
+
+        bp->hp = GetMonData(mon, MON_DATA_HP);
+        bp->maxHP = GetMonData(mon, MON_DATA_MAX_HP);
+
+        bp->level = GetMonData(mon, MON_DATA_LEVEL);
+
+        bp->friendship = GetMonData(mon, MON_DATA_FRIENDSHIP);
+
+        bp->item = GetMonData(mon, MON_DATA_HELD_ITEM);
+
+        bp->personality = GetMonData(mon, MON_DATA_PERSONALITY);
+
+        bp->status1 = GetMonData(mon, MON_DATA_STATUS);
+
+        bp->status2 = 0;
+
+        bp->abilityNum = GetMonAbility(mon);
+
+        bp->isEgg = GetMonData(mon, MON_DATA_IS_EGG);
+
+        bp->gender =
+            GetGenderFromSpeciesAndPersonality(
+                bp->species,
+                bp->personality);
+
+        bp->nature =
+            GetNatureFromPersonality(bp->personality);
+
+        bp->ppBonuses = GetMonData(mon, MON_DATA_PP_BONUSES);
+
+        bp->hpEV = GetMonData(mon, MON_DATA_HP_EV);
+        bp->atkEV = GetMonData(mon, MON_DATA_ATK_EV);
+        bp->defEV = GetMonData(mon, MON_DATA_DEF_EV);
+        bp->speedEV = GetMonData(mon, MON_DATA_SPEED_EV);
+        bp->spAtkEV = GetMonData(mon, MON_DATA_SPATK_EV);
+        bp->spDefEV = GetMonData(mon, MON_DATA_SPDEF_EV);
+
+        bp->hpIV = GetMonData(mon, MON_DATA_HP_IV);
+        bp->atkIV = GetMonData(mon, MON_DATA_ATK_IV);
+        bp->defIV = GetMonData(mon, MON_DATA_DEF_IV);
+        bp->speedIV = GetMonData(mon, MON_DATA_SPEED_IV);
+        bp->spAtkIV = GetMonData(mon, MON_DATA_SPATK_IV);
+        bp->spDefIV = GetMonData(mon, MON_DATA_SPDEF_IV);
+
+        for (j = 0; j < MAX_MON_MOVES; j++)
+        {
+            bp->moves[j] =
+                GetMonData(mon, MON_DATA_MOVE1 + j);
+
+            if (bp->moves[j] == MOVE_NONE)
+            {
+                bp->pp[j] = 0;
+                bp->seen_move[j] = 0;
+            }
+            else
+            {
+                bp->pp[j] =
+                    GetMonData(mon, MON_DATA_PP1 + j);
+
+                bp->seen_move[j] = 1;
+            }
         }
 
-        bp->hp = GetMonData(&gEnemyParty[i], MON_DATA_HP);
-        bp->maxHP = GetMonData(&gEnemyParty[i], MON_DATA_MAX_HP);
-        bp->level = GetMonData(&gEnemyParty[i], MON_DATA_LEVEL);
-        // DebugPrintf("%S", bp->nickname);
-        // DebugPrintf("%u", bp->hp);
-        // DebugPrintf("%u", bp->maxHP);
-        // DebugPrintf("%u", bp->level);
-        // DebugPrintf("END OF POKEMON");
-        for (j = 0; j < MAX_MON_MOVES; j++) {
-            bp->moves[j] = GetMonData(&gEnemyParty[i], MON_DATA_MOVE1 + j);
-            if (bp->moves[j] == 0) {
-                bp->pp[j] = 0xdf;
-            }
-            else {
-                bp->pp[j] = GetMonData(&gEnemyParty[i], MON_DATA_PP1 + j);
-            }
-        }
+        for (j = 0; j < NUM_BATTLE_STATS; j++)
+            bp->statStages[j] =
+            gBattleMons[i].statStages[j];
 
-        for (j = 0; j < NUM_BATTLE_STATS; j++) {
-            bp->statStages[j] = gBattleMons[i].statStages[j];
-        }
         bp->seen = 0xBB;
     }
 
-    for (i = 0; i < count; i++) {
-        dumpMemoryOfPokemon(base, &playerMons[i]);
-        base += 0x30;
+    for (i = 0; i < count; i++)
+    {
+        dumpMemoryOfPokemon(base, &enemyMons[i]);
+        base += sizeof(struct SimulatorBattlePokemon);
     }
+
     return base;
 }
 
@@ -387,12 +462,8 @@ static void HandleInputChooseAction(void)
     u8* base_2;
     u8 j;
     itemId = gBattleBufferA[gActiveBattler][2] | (gBattleBufferA[gActiveBattler][3] << 8);
-    base_2 = (u8*)0x2ffffff;
-    DoBounceEffect(gActiveBattler, BOUNCE_HEALTHBOX, 7, 1);
-    DoBounceEffect(gActiveBattler, BOUNCE_MON, 7, 1);
-    
-    j = 1;
-    
+    base_2 = (u8*)0x2ffffff;    
+    j = 1;    
     *base_2 = 0xfe;
     base = (u8*)0x3000100;
     base = dumpPlayerMons(base);

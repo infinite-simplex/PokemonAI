@@ -296,6 +296,46 @@ struct BattlePokemon
     /*0x0C*/ u8 seen_move[MAX_MON_MOVES];
 };
 
+struct SimulatorBattlePokemon
+{
+    u16 species;
+    u16 attack;
+    u16 defense;
+    u16 speed;
+    u16 spAttack;
+    u16 spDefense;
+    u16 moves[MAX_MON_MOVES];
+    u16 hp;
+    u16 maxHP;
+    u16 item;
+    u8 level;
+    u8 friendship;
+    u32 personality;
+    u32 status1;
+    u32 status2;
+    s8 statStages[NUM_BATTLE_STATS];
+    u8 pp[MAX_MON_MOVES];
+    u8 seen_move[MAX_MON_MOVES];
+    u8 ppBonuses;
+    u8 isEgg;
+    u8 gender;
+    u8 nature;
+    u8 hpEV;
+    u8 atkEV;
+    u8 defEV;
+    u8 speedEV;
+    u8 spAtkEV;
+    u8 spDefEV;
+    u8 hpIV;
+    u8 atkIV;
+    u8 defIV;
+    u8 speedIV;
+    u8 spAtkIV;
+    u8 spDefIV;
+    u8 abilityNum;
+    u8 seen;
+};
+
 struct SpeciesInfo
 {
  /* 0x00 */ u8 baseHP;
