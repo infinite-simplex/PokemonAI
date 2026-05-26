@@ -3,11 +3,14 @@ local DATA_START_ADDRESS = 0x3000100
 
 local SERVER_IP = "127.0.0.1"
 local SERVER_PORT = 8080
+local STRUCT_SIZE = 74 --bytes
+local PADDING_SIZE = 6 -- bytes
+
 
 local function parsePokemonBlock(address)
     local hexStr = ""
-    -- Read the full 48-byte (0x30) structural block for one Pokemon
-    for i = 0, 47 do
+    -- Read the full structural block for one Pokemon
+    for i = 0, STRUCT_SIZE-1 do
         local byte = emu:read8(address + i)
         hexStr = hexStr .. string.format("%02X", byte)
     end
@@ -25,22 +28,24 @@ local function handleBattleTurn()
         local enemy_team = {}
         local current_address = DATA_START_ADDRESS
         
-        -- Loop through a potential maximum party size of 6 for Player
-        for i = 1, 6 do
-            local marker = emu:read8(current_address + 0x0A)
-            if marker ~= 0xAA then break end -- Break if no more active player mons
-            table.insert(player_team, parsePokemonBlock(current_address))
-            current_address = current_address + 0x30
+        -- Read up to 12 pokemon blocks
+        for i = 1, 12 do
+            local parsed_pokemon = parsePokemonBlock(current_address)
+			local team_marker = string.sub(parsed_pokemon, (STRUCT_SIZE-1)*2 + 1, STRUCT_SIZE*2)
+
+			console:log(team_marker)
+			if team_marker == "AA" then
+				table.insert(player_team, parsed_pokemon)
+			elseif team_marker == "BB" then
+				table.insert(enemy_team, parsed_pokemon)
+			else
+                break
+            end
+
+            current_address = current_address + STRUCT_SIZE + PADDING_SIZE
         end
-        
-        -- Loop through a potential maximum party size of 6 for Enemy
-        for i = 1, 6 do
-            local marker = emu:read8(current_address + 0x0A)
-            if marker ~= 0xBB then break end -- Break if no more active enemy mons
-            table.insert(enemy_team, parsePokemonBlock(current_address))
-            current_address = current_address + 0x30
-        end
-        
+
+
         -- Format payload
         local payload = string.format(
             '{"player":[%s],"enemy":[%s]}',
@@ -48,6 +53,7 @@ local function handleBattleTurn()
             '"' .. table.concat(enemy_team, '","') .. '"'
         )
         
+        console:log(payload)
         -- Send data to simulation server
         local client = socket.tcp()
         
@@ -59,17 +65,17 @@ local function handleBattleTurn()
             client:send(payload)
             
             -- Read the decision response from your server
-            local response, err = client:receive("*l") -- Expects a single text line response
-            client:close()
-            
-            if response then
-                -- Parse your decision byte from server text response (e.g., "0x10" or "0x01")
-                local decisionByte = tonumber(response) or 0x00
-                
-                -- Write back choice to release the C game loop freeze
-                emu:write8(FLAG_ADDRESS, decisionByte) 
-                console:log("Decision byte written back to ROM: " .. string.format("0x%02X", decisionByte))
-            end
+            --local response, err = client:receive("*l") -- Expects a single text line response
+            --client:close()
+            --
+            --if response then
+            --    -- Parse your decision byte from server text response (e.g., "0x10" or "0x01")
+            --    local decisionByte = tonumber(response) or 0x00
+            --    
+            --    -- Write back choice to release the C game loop freeze
+            --    emu:write8(FLAG_ADDRESS, decisionByte) 
+            --    console:log("Decision byte written back to ROM: " .. string.format("0x%02X", decisionByte))
+            --end
         else
             console:error("Failed to connect to calculation server.")
             emu:write8(FLAG_ADDRESS, 0x00) -- Fallback safety break

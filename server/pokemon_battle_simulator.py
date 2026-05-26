@@ -6,6 +6,34 @@ import re
 import json
 import subprocess
 from pathlib import Path
+DISPLAY_USE_NAMES = True  # Toggle: True = human-readable names, False = raw byte values
+NATURES = [
+    "Hardy",
+    "Lonely",
+    "Brave",
+    "Adamant",
+    "Naughty",
+    "Bold",
+    "Docile",
+    "Relaxed",
+    "Impish",
+    "Lax",
+    "Timid",
+    "Hasty",
+    "Serious",
+    "Jolly",
+    "Naive",
+    "Modest",
+    "Mild",
+    "Quiet",
+    "Bashful",
+    "Rash",
+    "Calm",
+    "Gentle",
+    "Sassy",
+    "Careful",
+    "Quirky",
+]
 
 ROOT_DIR = Path(__file__).resolve().parent
 
@@ -36,7 +64,8 @@ def parse_c_defines(path, prefix):
 
             name = match.group(1)
             value = int(match.group(2))
-
+            if name == 'COUNT':
+                break
             # Convert SHOWDOWN_FORMAT
             ps_name = (
                 name.lower()
@@ -47,6 +76,7 @@ def parse_c_defines(path, prefix):
 
     return mapping
 
+
 def decode_gba_string(raw_bytes: bytes) -> str:
     """Decodes raw GBA string buffers using the native character offsets."""
     decoded = []
@@ -56,80 +86,282 @@ def decode_gba_string(raw_bytes: bytes) -> str:
         decoded.append(GBA_CHAR_MAP.get(b, f"[{b:02X}]"))
     return "".join(decoded).strip()
 
+
 # -------------------------------------------------------------------------
 # SHOWDOWN TEAM PACKER
 # -------------------------------------------------------------------------
 
 def build_showdown_set(mon_dict):
-    """
-    Converts your parsed Pokémon dict into a Showdown-compatible set.
-    """
-
     return {
         "species": mon_dict["species"].capitalize(),
-        "name": mon_dict["nickname"],
-        "item": "",
+        "name": mon_dict.get("nickname", ""),
+        "item": mon_dict.get("item", ""),
         "ability": "None",
         "moves": mon_dict["moves"],
-        "nature": "Adamant",
+        "nature": mon_dict.get("nature", "Hardy"),
 
-        # Assume 0 EVs / IVs for now
-        "evs": {
+        "evs": mon_dict.get("evs", {
             "hp": 0,
             "atk": 0,
             "def": 0,
             "spa": 0,
             "spd": 0,
             "spe": 0,
-        },
+        }),
 
-        "ivs": {
-            "hp": 0,
-            "atk": 0,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 0,
-        },
+        "ivs": mon_dict.get("ivs", {
+            "hp": 31,
+            "atk": 31,
+            "def": 31,
+            "spa": 31,
+            "spd": 31,
+            "spe": 31,
+        }),
 
         "level": mon_dict["level"],
     }
 
+
 class BattlePokemon:
+    NUM_MOVES = 4
+    NUM_STATS = 8
+
+    # Exact struct layout from C
+    #
+    # u16 species
+    # u16 attack
+    # u16 defense
+    # u16 speed
+    # u16 spAttack
+    # u16 spDefense
+    # u16 moves[4]
+    # u16 hp
+    # u16 maxHP
+    # u16 item
+    # u8 level
+    # u8 friendship
+    # u32 personality
+    # u32 status1
+    # u32 status2
+    # s8 statStages[8]
+    # u8 pp[4]
+    # u8 seen_move[4]
+    # u8 ppBonuses
+    # u8 isEgg
+    # u8 gender
+    # u8 nature
+    # u8 hpEV
+    # u8 atkEV
+    # u8 defEV
+    # u8 speedEV
+    # u8 spAtkEV
+    # u8 spDefEV
+    # u8 hpIV
+    # u8 atkIV
+    # u8 defIV
+    # u8 speedIV
+    # u8 spAtkIV
+    # u8 spDefIV
+    # u8 abilityNum
+    # u8 seen
+
+    POKE_STRUCT_FMT = (
+        "<"  # little endian
+
+        # core stats
+        "H"  # species
+        "H"  # attack
+        "H"  # defense
+        "H"  # speed
+        "H"  # spAttack
+        "H"  # spDefense
+
+        # moves
+        "4H"  # moves[4]
+
+        # hp/item
+        "H"  # hp
+        "H"  # maxHP
+        "H"  # item
+
+        # misc
+        "B"  # level
+        "B"  # friendship
+
+        # statuses
+        "I"  # personality
+        "I"  # status1
+        "I"  # status2
+
+        # stages
+        "8b"  # statStages[8]
+
+        # pp
+        "4B"  # pp[4]
+
+        # seen moves
+        "4B"  # seen_move[4]
+
+        # misc flags
+        "B"  # ppBonuses
+        "B"  # isEgg
+        "B"  # gender
+        "B"  # nature
+
+        # EVs
+        "6B"
+
+        # IVs
+        "6B"
+
+        # Extra
+        "B"  # seen
+        "B"  # abilityNum
+    )
+
+    STRUCT_SIZE = struct.calcsize(POKE_STRUCT_FMT)
+
     def __init__(self, raw_bytes: bytes):
-        POKE_STRUCT_FMT = "<10sBBII4H4B4B8BHH"
-        STRUCT_SIZE = struct.calcsize(POKE_STRUCT_FMT)  # Validates to exactly 48 bytes
+        if len(raw_bytes) != self.STRUCT_SIZE:
+            raise ValueError(
+                f"Invalid byte size. "
+                f"Expected {self.STRUCT_SIZE}, got {len(raw_bytes)}"
+            )
 
+        u = struct.unpack(self.POKE_STRUCT_FMT, raw_bytes)
 
-        if len(raw_bytes) != STRUCT_SIZE:
-            raise ValueError(f"Invalid byte size. Expected {STRUCT_SIZE}, got {len(raw_bytes)}")
+        i = 0
 
-        # Unpack binary buffer into raw components
-        unpacked = struct.unpack(POKE_STRUCT_FMT, raw_bytes)
+        self.species = u[i]
+        i += 1
 
-        # Extract variables from tuple
-        self.nickname = decode_gba_string(unpacked[0])
-        self.seen_flag = "PLAYER" if unpacked[1] == 0xAA else "ENEMY"
-        self.level = unpacked[2]
-        self.status1 = unpacked[3]
-        self.status2 = unpacked[4]
+        self.attack = u[i]
+        i += 1
+        self.defense = u[i]
+        i += 1
+        self.speed = u[i]
+        i += 1
+        self.sp_attack = u[i]
+        i += 1
+        self.sp_defense = u[i]
+        i += 1
 
-        # Array-based extractions
-        self.moves = list(unpacked[5:9])
-        self.seen_moves = list(unpacked[9:13])
-        self.pps = list(unpacked[13:17])
-        self.stat_stages = list(unpacked[17:25])
+        self.moves = list(u[i:i + 4])
+        i += 4
 
-        self.hp = unpacked[25]
-        self.max_hp = unpacked[26]
+        self.hp = u[i]
+        i += 1
+        self.max_hp = u[i]
+        i += 1
+        self.item = u[i]
+        i += 1
+
+        self.level = u[i]
+        i += 1
+        self.friendship = u[i]
+        i += 1
+
+        self.personality = u[i]
+        i += 1
+
+        self.status1 = u[i]
+        i += 1
+        self.status2 = u[i]
+        i += 1
+
+        self.stat_stages = list(u[i:i + 8])
+        i += 8
+
+        self.pps = list(u[i:i + 4])
+        i += 4
+
+        self.seen_moves = list(u[i:i + 4])
+        i += 4
+
+        self.pp_bonuses = u[i]
+        i += 1
+        self.is_egg = u[i]
+        i += 1
+        self.gender = u[i]
+        i += 1
+        self.nature = u[i]
+        i += 1
+
+        # EVs
+        self.evs = {
+            "hp": u[i + 0],
+            "atk": u[i + 1],
+            "def": u[i + 2],
+            "spe": u[i + 3],
+            "spa": u[i + 4],
+            "spd": u[i + 5],
+        }
+        i += 6
+
+        # IVs
+        self.ivs = {
+            "hp": u[i + 0],
+            "atk": u[i + 1],
+            "def": u[i + 2],
+            "spe": u[i + 3],
+            "spa": u[i + 4],
+            "spd": u[i + 5],
+        }
+        i += 6
+        self.ability_num = u[i]
+        i += 1
+        self.seen = u[i]
 
     def display(self):
-        """Prints a clean status card of the unpacked stats."""
-        status_txt = "Healthy" if self.status1 == 0 else f"Condition Flags: {self.status1:08X}"
-        print(f"  ● {self.nickname:<10} [Lv.{self.level:<2}]  HP: {self.hp}/{self.max_hp} ({status_txt})")
-        print(f"    Moves:  " + " | ".join(f"ID:{m} (PP:{p})" for m, p in zip(self.moves, self.pps) if m != 0))
+        if DISPLAY_USE_NAMES:
+            species_str = SPECIES_ID_TO_PS[self.species]
+            ability_str = ABILITY_ID_TO_PS[self.ability_num]
+            moves_str = " | ".join(
+                f"{MOVE_ID_TO_PS[m]} (PP:{p})"
+                for m, p in zip(self.moves, self.pps)
+                if m != 0
+            )
+        else:
+            species_str = str(self.species)
+            ability_str = str(self.ability_num)
+            moves_str = " | ".join(
+                f"ID:{m} (PP:{p})"
+                for m, p in zip(self.moves, self.pps)
+                if m != 0
+            )
+
+        status_txt = (
+            "Healthy"
+            if self.status1 == 0
+            else f"Condition Flags: {self.status1:08X}"
+        )
+
         print(
-            f"    Stages: Atk:{self.stat_stages[1]} | Def:{self.stat_stages[2]} | Spd:{self.stat_stages[3]} | SpA:{self.stat_stages[4]} | SpD:{self.stat_stages[5]}")
+            f"  ● Species:{species_str:<20} "
+            f"[Lv.{self.level:<2}] "
+            f"HP: {self.hp}/{self.max_hp} "
+            f"({status_txt})"
+        )
+
+        print(
+            f"    Stats: "
+            f"Atk:{self.attack} "
+            f"Def:{self.defense} "
+            f"Spe:{self.speed} "
+            f"SpA:{self.sp_attack} "
+            f"SpD:{self.sp_defense}"
+        )
+
+        print(f"    Moves: {moves_str}")
+        print(f"    EVs: {self.evs}")
+        print(f"    IVs: {self.ivs}")
+
+        print(
+            f"    Nature:{self.nature} "
+            f"Friendship:{self.friendship} "
+            f"Ability:{ability_str}"
+        )
+
         print("-" * 65)
 
 
@@ -139,6 +371,7 @@ class BattlePokemon:
 class BattleStatePayload(BaseModel):
     player: List[str]  # List of hexadecimal strings sent from Lua
     enemy: List[str]
+
 
 def start_showdown_battle(player_team, enemy_team):
     """
@@ -177,6 +410,7 @@ def start_showdown_battle(player_team, enemy_team):
             break
 
         print(line.strip())
+
 
 # -------------------------------------------------------------------------
 # GBA -> POKEMON SHOWDOWN CONVERSION
@@ -252,7 +486,7 @@ def map_gba_to_ps(mon: BattlePokemon, species_id: int):
 
     return {
         "species": species,
-        "nickname": mon.nickname,
+        "nickname": species,
         "level": mon.level,
 
         "hp": mon.hp,
@@ -263,7 +497,18 @@ def map_gba_to_ps(mon: BattlePokemon, species_id: int):
         "moves": moves,
 
         "boosts": boosts,
+
+        "evs": mon.evs,
+        "ivs": mon.ivs,
+
+        "nature": NATURES[mon.nature],
+
+        "item": ITEM_ID_TO_PS.get(
+            mon.item,
+            ""
+        ),
     }
+
 
 @app.post("/predict")
 async def process_predict(payload: BattleStatePayload):
@@ -277,7 +522,7 @@ async def process_predict(payload: BattleStatePayload):
         for hex_str in payload.player:
             mon = BattlePokemon(bytes.fromhex(hex_str))
             mon.display()
-            ps_mon = map_gba_to_ps(mon, species_id=25)
+            ps_mon = map_gba_to_ps(mon, species_id=mon.species)
             player_team.append(ps_mon)
 
         print("\n[ENEMY PARTY]")
@@ -285,7 +530,7 @@ async def process_predict(payload: BattleStatePayload):
         for hex_str in payload.enemy:
             mon = BattlePokemon(bytes.fromhex(hex_str))
             mon.display()
-            ps_mon = map_gba_to_ps(mon, species_id=94)
+            ps_mon = map_gba_to_ps(mon, species_id=mon.species)
             enemy_team.append(ps_mon)
 
         # -----------------------------------------------------------------
@@ -324,6 +569,16 @@ MOVE_ID_TO_PS = parse_c_defines(
 SPECIES_ID_TO_PS = parse_c_defines(
     ROOT_DIR / "../pokeemerald/include/constants/species.h",
     "SPECIES_"
+)
+
+ITEM_ID_TO_PS = parse_c_defines(
+    ROOT_DIR / "../pokeemerald/include/constants/items.h",
+    "ITEM_"
+)
+
+ABILITY_ID_TO_PS = parse_c_defines(
+    ROOT_DIR / "../pokeemerald/include/constants/abilities.h",
+    "ABILITY_"
 )
 
 if __name__ == "__main__":
