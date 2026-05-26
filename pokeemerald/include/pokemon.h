@@ -334,6 +334,7 @@ struct SimulatorBattlePokemon
     u8 spDefIV;
     u8 abilityNum;
     u8 seen;
+    u8 padding[6];
 };
 
 struct SpeciesInfo
