@@ -1,5 +1,6 @@
 import struct
-from fastapi import FastAPI, HTTPException
+import socket
+import json
 from pydantic import BaseModel
 from typing import List
 import re
@@ -45,8 +46,6 @@ showdown_proc = subprocess.Popen(
     text=True,
     bufsize=1
 )
-app = FastAPI()
-
 
 def parse_c_defines(path, prefix):
     mapping = {}
@@ -510,8 +509,7 @@ def map_gba_to_ps(mon: BattlePokemon, species_id: int):
     }
 
 
-@app.post("/predict")
-async def process_predict(payload: BattleStatePayload):
+def process_predict(payload: BattleStatePayload):
     print("\n" + "=" * 25 + " INCOMING BATTLE STATE " + "=" * 25)
 
     try:
@@ -536,24 +534,18 @@ async def process_predict(payload: BattleStatePayload):
         # -----------------------------------------------------------------
         # START SHOWDOWN SIM
         # -----------------------------------------------------------------
-
-        start_showdown_battle(
-            player_team,
-            enemy_team
-        )
-
-        # -----------------------------------------------------------------
-        # TEMP DECISION
-        # -----------------------------------------------------------------
-
-        decision_byte = "0x01"
+        print("start_showdown_battle")
+        decision_byte = 0x00
+        try:
+            start_showdown_battle(player_team,enemy_team)
+        except:
+            pass
 
         print(f"Decision evaluated. Releasing GBA with: {decision_byte}")
         return decision_byte
 
     except Exception as e:
         print(f"Parsing error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 # GBA text encoding translation map (Gen 3 English mapping fallback helper)
@@ -582,8 +574,13 @@ ABILITY_ID_TO_PS = parse_c_defines(
 )
 
 if __name__ == "__main__":
-    import uvicorn
+    HOST = "127.0.0.1"
+    PORT = 8080
 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((HOST, PORT))
+    server.listen(1)
+    print(f"Listening on {HOST}:{PORT}")
     # -------------------------------------------------------------------------
     # 1. POKÉMON DATA STRUCTURE & PARSER
     # -------------------------------------------------------------------------
@@ -601,5 +598,28 @@ if __name__ == "__main__":
     #  - H  : 2 bytes (uint16) for current HP
     #  - H  : 2 bytes (uint16) for Max HP
 
-    # Start the server locally
-    uvicorn.run(app, host="127.0.0.1", port=8080)
+    while True:
+        conn, addr = server.accept()
+
+        try:
+            raw_data = conn.recv(65536).decode()
+
+            payload = BattleStatePayload(
+                **json.loads(raw_data)
+            )
+
+            # JUST CALL YOUR EXISTING FUNCTION
+            decision_byte = process_predict(payload)
+
+            conn.send(str(decision_byte).encode())
+            print(str(decision_byte).encode())
+
+        except Exception as e:
+            print(e)
+
+            try:
+                conn.send(b"7")
+            except:
+                pass
+
+        conn.close()

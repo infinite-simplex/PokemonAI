@@ -36,6 +36,9 @@
 #include "constants/trainers.h"
 #include "constants/rgb.h"
 
+#define DECISION_ADDRESS 0x2ffffff
+#define DUMPING_ADDRESS_BASE 0x3000100
+
 static void PlayerHandleGetMonData(void);
 static void PlayerHandleSetMonData(void);
 static void PlayerHandleSetRawMonData(void);
@@ -458,36 +461,58 @@ u8* dumpEnemyMons(u8* base)
 static void HandleInputChooseAction(void)
 {
     u16 itemId;
-    u8* base;
-    u8* base_2;
+    u8* dump_addr;
+    u8* dump_base_addr;
+    u8* decision_byte;
+    u8* end_of_dumping;
+    u8 decision;
     u8 j;
     itemId = gBattleBufferA[gActiveBattler][2] | (gBattleBufferA[gActiveBattler][3] << 8);
-    base_2 = (u8*)0x2ffffff;    
+    decision_byte = (u8*)DECISION_ADDRESS;
     j = 1;    
-    *base_2 = 0xfe;
-    base = (u8*)0x3000100;
-    base = dumpPlayerMons(base);
-    base = dumpEnemyMons(base);
-    *(base) = 0xff;
+    dump_base_addr = (u8*)DUMPING_ADDRESS_BASE;
+    dump_addr = dump_base_addr;
+    dump_addr = dumpPlayerMons(dump_addr);
+    dump_addr = dumpEnemyMons(dump_addr);
+    *decision_byte = 0xfe;//signal for the ai to gather game-state and make a decision
+    end_of_dumping = dump_addr;
+    //*(end_of_dumping) = 0xff;
     //loop until we receive a response
-    while (0xfe == (*base_2)) {
-        *(base + 1) = j;
+    while (0xfe == (*decision_byte)) {
+        //so the while loop doesn't get optimzed away
+        *(end_of_dumping + 1) = j;
         j++;
     }
-    base_2 = (u8*)0x3000100;
-
+    dump_addr = dump_base_addr;
     //clear the memory we overwrote
-    while (base_2 <= base + 1) {
-        *(base_2) = 0;
-        base_2++;
+    while (dump_addr <= end_of_dumping + 1) {
+        *(dump_addr) = 0;
+        dump_addr++;
     }
-    base_2 = (u8*)0x2ffffff;
+    decision = *decision_byte;
+    if (decision & 0xF0) {
+        //this is a switch
+        gActionSelectionCursor[gActiveBattler] = 2;
+    }
+    else if (decision == 0xA) {
+        //run
+    }
+    else if (decision == 0xB) {
+        //attempt capture
+    }
+    else if (decision == 0x07) {
+        //this is a fault
+    }
+    else {
+        //this is an attack
+        gActionSelectionCursor[gActiveBattler] = 0;
+    }
     if (JOY_REPEAT(DPAD_ANY) && gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_L_EQUALS_A)
         gPlayerDpadHoldFrames++;
     else
         gPlayerDpadHoldFrames = 0;
 
-    if (JOY_NEW(A_BUTTON))
+    if (JOY_NEW(A_BUTTON) || decision != 0x07)
     {
         PlaySE(SE_SELECT);
 
@@ -717,18 +742,20 @@ static void HandleInputChooseTarget(void)
 
 static void HandleInputChooseMove(void)
 {
+    u8* decision_byte;
     struct ChooseMoveStruct* moveInfo;
     bool32 canSelectTarget = FALSE;
     moveInfo = (struct ChooseMoveStruct*)(&gBattleBufferA[gActiveBattler][4]);
-
+    decision_byte = (u8*)DECISION_ADDRESS;
+    
     if (JOY_HELD(DPAD_ANY) && gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_L_EQUALS_A)
         gPlayerDpadHoldFrames++;
     else
         gPlayerDpadHoldFrames = 0;
-
-    if (JOY_NEW(A_BUTTON))
+    if (JOY_NEW(A_BUTTON) || *decision_byte <= 3)
     {
         u8 moveTarget;
+        gMoveSelectionCursor[gActiveBattler] = *decision_byte;
 
         PlaySE(SE_SELECT);
         if (moveInfo->moves[gMoveSelectionCursor[gActiveBattler]] == MOVE_CURSE)

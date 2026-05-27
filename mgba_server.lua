@@ -22,7 +22,8 @@ local function handleBattleTurn()
     local flag = emu:read8(FLAG_ADDRESS)
     
     if flag == 0xFE then
-        console:log("AI Choice requested. Scraping battle memory...")
+        console:log("AI Choice requested. Scraping battle memory at")
+        console:log(string.format("%02X", DATA_START_ADDRESS))
         
         local player_team = {}
         local enemy_team = {}
@@ -56,29 +57,35 @@ local function handleBattleTurn()
         console:log(payload)
         -- Send data to simulation server
         local client = socket.tcp()
-        
+
         if client:connect(SERVER_IP, SERVER_PORT) then
-            client:send("POST /predict HTTP/1.1\r\n")
-            client:send("Host: localhost\r\n")
-            client:send("Content-Type: application/json\r\n")
-            client:send("Content-Length: " .. string.len(payload) .. "\r\n\r\n")
+            -- send body AFTER blank line
             client:send(payload)
-            
-            -- Read the decision response from your server
-            --local response, err = client:receive("*l") -- Expects a single text line response
-            --client:close()
-            --
-            --if response then
-            --    -- Parse your decision byte from server text response (e.g., "0x10" or "0x01")
-            --    local decisionByte = tonumber(response) or 0x00
-            --    
-            --    -- Write back choice to release the C game loop freeze
-            --    emu:write8(FLAG_ADDRESS, decisionByte) 
-            --    console:log("Decision byte written back to ROM: " .. string.format("0x%02X", decisionByte))
-            --end
+
+            local response, err
+            local attempts = 0
+
+            repeat
+                client:poll()
+                response, err = client:receive(1)
+                attempts = attempts + 1
+            until response ~= nil or attempts > 1000
+
+            console:log("RESPONSE: " .. tostring(response))
+            console:log("ERR: " .. tostring(err))
+
+            client:close()
+
+            local decisionByte = tonumber(response) or 0x07
+
+            emu:write8(FLAG_ADDRESS, decisionByte)
+
+            console:log(
+                "Decision byte written: " ..
+                string.format("0x%02X", decisionByte)
+            )
         else
-            console:error("Failed to connect to calculation server.")
-            emu:write8(FLAG_ADDRESS, 0x00) -- Fallback safety break
+            console:log("Connection failed.")
         end
     end
 end
