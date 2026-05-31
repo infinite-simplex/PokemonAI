@@ -53,11 +53,10 @@ local function handleBattleTurn()
             '"' .. table.concat(player_team, '","') .. '"',
             '"' .. table.concat(enemy_team, '","') .. '"'
         )
-        
+        local start_time = os.clock()
         console:log(payload)
         -- Send data to simulation server
         local client = socket.tcp()
-
         if client:connect(SERVER_IP, SERVER_PORT) then
             -- send body AFTER blank line
             client:send(payload)
@@ -69,7 +68,7 @@ local function handleBattleTurn()
                 client:poll()
                 response, err = client:receive(1)
                 attempts = attempts + 1
-            until response ~= nil or attempts > 1000
+            until response ~= nil or (os.clock() - start_time) > 10
 
             console:log("RESPONSE: " .. tostring(response))
             console:log("ERR: " .. tostring(err))

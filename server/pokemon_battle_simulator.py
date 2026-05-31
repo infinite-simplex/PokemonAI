@@ -7,6 +7,7 @@ import re
 import json
 import subprocess
 from pathlib import Path
+import time
 DISPLAY_USE_NAMES = True  # Toggle: True = human-readable names, False = raw byte values
 NATURES = [
     "Hardy",
@@ -39,14 +40,20 @@ NATURES = [
 ROOT_DIR = Path(__file__).resolve().parent
 
 showdown_proc = subprocess.Popen(
-    ["node", str(ROOT_DIR / "server/ps.js")],
+    ["node", str(ROOT_DIR / "ps.js")],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     text=True,
     bufsize=1
 )
+time.sleep(1)
 
+if showdown_proc.poll() is None:
+    print("Process is still running")
+else:
+    print(f"Process exited with code {showdown_proc.returncode}")
+    print(showdown_proc.stderr.read())
 def parse_c_defines(path, prefix):
     mapping = {}
 
@@ -351,6 +358,16 @@ class BattlePokemon:
             f"SpD:{self.sp_defense}"
         )
 
+        print(
+            f"    Stats Stages: "
+            f"Atk:{self.stat_stages[0]} "
+            f"Def:{self.stat_stages[1]} "
+            f"SpA:{self.stat_stages[2]} "
+            f"Spe:{self.stat_stages[3]} "
+            f"SpD:{self.stat_stages[4]} "
+            f"Acc:{self.stat_stages[5]} "
+        )
+
         print(f"    Moves: {moves_str}")
         print(f"    EVs: {self.evs}")
         print(f"    IVs: {self.ivs}")
@@ -371,6 +388,22 @@ class BattleStatePayload(BaseModel):
     player: List[str]  # List of hexadecimal strings sent from Lua
     enemy: List[str]
 
+def read_until_sentinel(sentinels, max_lines=60):
+    """Read lines from Showdown stdout until a sentinel tag is seen."""
+    lines = []
+    stopProcessing = False
+    for _ in range(max_lines):
+        line = showdown_proc.stdout.readline()
+        if not line:
+            break
+        lines.append(line.rstrip())
+
+        for sentinel in sentinels:
+            if sentinel in line:
+                stopProcessing = True
+        if stopProcessing:
+            break
+    return lines
 
 def start_showdown_battle(player_team, enemy_team):
     """
@@ -382,6 +415,9 @@ def start_showdown_battle(player_team, enemy_team):
     p2_sets = [build_showdown_set(mon) for mon in enemy_team]
 
     # Start battle
+    # print('>start {"formatid":"gen3ou"}\n')
+    # print(f'>player p1 {json.dumps({"name": "AI", "team": p1_sets})}\n')
+    # print(f'>player p2 {json.dumps({"name": "Enemy", "team": p2_sets})}\n')
     showdown_proc.stdin.write(
         '>start {"formatid":"gen3ou"}\n'
     )
@@ -390,7 +426,6 @@ def start_showdown_battle(player_team, enemy_team):
     showdown_proc.stdin.write(
         f'>player p1 {json.dumps({"name": "AI", "team": p1_sets})}\n'
     )
-
     # Send player 2
     showdown_proc.stdin.write(
         f'>player p2 {json.dumps({"name": "Enemy", "team": p2_sets})}\n'
@@ -400,15 +435,16 @@ def start_showdown_battle(player_team, enemy_team):
 
     print("\n[SHOWDOWN OUTPUT]")
     print("-" * 65)
+    print(read_until_sentinel({"turn"}))
+    # tell pokemon showdown to use attack move 1
+    showdown_proc.stdin.write(">p1 move 1\n")
+    showdown_proc.stdin.write(">p2 move 1\n")
+    showdown_proc.stdin.flush()
 
-    # Read several startup lines
-    for _ in range(15):
-        line = showdown_proc.stdout.readline()
-
-        if not line:
-            break
-
-        print(line.strip())
+    print(read_until_sentinel({"turn", "winner"}))
+    # Return decision byte 0x01 = "use move 1"
+    # time.sleep(5)
+    return 0x00
 
 
 # -------------------------------------------------------------------------
@@ -537,9 +573,9 @@ def process_predict(payload: BattleStatePayload):
         print("start_showdown_battle")
         decision_byte = 0x00
         try:
-            start_showdown_battle(player_team,enemy_team)
-        except:
-            pass
+            decision_byte = start_showdown_battle(player_team, enemy_team)
+        except Exception as e:
+            print(e)
 
         print(f"Decision evaluated. Releasing GBA with: {decision_byte}")
         return decision_byte
