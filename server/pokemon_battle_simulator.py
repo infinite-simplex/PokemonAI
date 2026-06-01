@@ -105,7 +105,6 @@ def build_showdown_set(mon_dict):
         "ability": "None",
         "moves": mon_dict["moves"],
         "nature": mon_dict.get("nature", "Hardy"),
-
         "evs": mon_dict.get("evs", {
             "hp": 0,
             "atk": 0,
@@ -125,6 +124,10 @@ def build_showdown_set(mon_dict):
         }),
 
         "level": mon_dict["level"],
+        # --- NEW CUSTOM OVERRIDES MATCHING THE TS CONSTRUCTOR ---
+        "customHp": mon_dict.get("hp", None),  # Expects integer (e.g., 145) or None
+        "customPp": mon_dict.get("pps", None),  # Expects array of ints (e.g., [5, 12]) or None
+        "customStatus": mon_dict.get("status", "")  # Expects string (e.g., "par", "tox", "brn") or "
     }
 
 
@@ -419,7 +422,7 @@ def start_showdown_battle(player_team, enemy_team):
     # print(f'>player p1 {json.dumps({"name": "AI", "team": p1_sets})}\n')
     # print(f'>player p2 {json.dumps({"name": "Enemy", "team": p2_sets})}\n')
     showdown_proc.stdin.write(
-        '>start {"formatid":"gen3ou"}\n'
+        '>start {"formatid":"gen3customgame"}\n'
     )
 
     # Send player 1
@@ -441,7 +444,7 @@ def start_showdown_battle(player_team, enemy_team):
     showdown_proc.stdin.write(">p2 move 1\n")
     showdown_proc.stdin.flush()
 
-    print(read_until_sentinel({"turn", "winner"}))
+    print(read_until_sentinel({"turn", "winner", "switch", "win"}))
     # Return decision byte 0x01 = "use move 1"
     # time.sleep(5)
     return 0x00
@@ -523,21 +526,15 @@ def map_gba_to_ps(mon: BattlePokemon, species_id: int):
         "species": species,
         "nickname": species,
         "level": mon.level,
-
         "hp": mon.hp,
         "maxhp": mon.max_hp,
-
         "status": status,
-
         "moves": moves,
-
+        "pps": list(mon.pps),
         "boosts": boosts,
-
         "evs": mon.evs,
         "ivs": mon.ivs,
-
         "nature": NATURES[mon.nature],
-
         "item": ITEM_ID_TO_PS.get(
             mon.item,
             ""
